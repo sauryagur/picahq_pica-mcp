@@ -11,28 +11,7 @@ import {
 import axios from "axios";
 import FormData from 'form-data';
 
-interface AvailableAction {
-  _id: string;
-  title: string;
-  tags?: string[];
-  knowledge?: any;
-  path?: string;
-}
-
-interface Connection {
-  key: string;
-  platform: string;
-  active: boolean;
-}
-
-interface ConnectionDefinition {
-  platform: string;
-  frontend: {
-    spec: {
-      title: string;
-    }
-  }
-}
+import {AvailableAction, Connection, ConnectionDefinition } from "./models/interfaces.ts";
 
 class PicaClient {
   private secret: string;
