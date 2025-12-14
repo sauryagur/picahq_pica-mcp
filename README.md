@@ -9,16 +9,19 @@ Demo Video: https://youtu.be/0jeasO20PyM
 ## Development
 
 Install dependencies:
+
 ```bash
 npm install
 ```
 
 Build the server:
+
 ```bash
 npm run build
 ```
 
 For development with auto-rebuild:
+
 ```bash
 npm run watch
 ```
@@ -36,9 +39,7 @@ On Windows: `%APPDATA%/Claude/claude_desktop_config.json`
   "mcpServers": {
     "pica-mcp-server": {
       "command": "node",
-      "args": [
-        "/path/to/pica-mcp-server/build/index.js"
-      ],
+      "args": ["/path/to/pica-mcp-server/build/index.js"],
       "env": {
         "PICA_SECRET": "YOUR_PICA_SECRET_KEY"
       }

@@ -8,10 +8,8 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import axios from "axios";
-import FormData from 'form-data';
 
-import {AvailableAction, Connection, ConnectionDefinition } from "./models/interfaces.ts";
+import { AvailableAction } from "./models/interfaces.ts";
 
 import PicaClient from "./PicaClient.ts";
 
@@ -26,7 +24,7 @@ const server = new Server(
       tools: {},
       prompts: {},
     },
-  }
+  },
 );
 
 const PICA_SECRET = process.env.PICA_SECRET!;
@@ -44,7 +42,7 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => {
   await initializePica();
 
   return {
-    resources: []
+    resources: [],
   };
 });
 
@@ -54,40 +52,50 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
   const url = new URL(request.params.uri);
   const scheme = url.protocol;
 
-  if (scheme === 'pica-platform:') {
+  if (scheme === "pica-platform:") {
     const platform = url.hostname;
     try {
       const actions = await picaClient.getAvailableActions(platform);
 
       return {
-        contents: [{
-          uri: request.params.uri,
-          mimeType: "application/json",
-          text: JSON.stringify(actions.map((action: AvailableAction) => ({
-            id: action._id,
-            title: action.title,
-            tags: action.tags || []
-          })), null, 2)
-        }]
+        contents: [
+          {
+            uri: request.params.uri,
+            mimeType: "application/json",
+            text: JSON.stringify(
+              actions.map((action: AvailableAction) => ({
+                id: action._id,
+                title: action.title,
+                tags: action.tags || [],
+              })),
+              null,
+              2,
+            ),
+          },
+        ],
       };
     } catch (error: any) {
       throw new Error(`Failed to get platform actions: ${error.message}`);
     }
-  } else if (scheme === 'pica-connection:') {
-    const [platform, key] = url.pathname.replace(/^\//, '').split('/');
+  } else if (scheme === "pica-connection:") {
+    const [platform, key] = url.pathname.replace(/^\//, "").split("/");
     const connections = picaClient.getConnections();
-    const connection = connections.find(c => c.key === key && c.platform === platform);
+    const connection = connections.find(
+      (c) => c.key === key && c.platform === platform,
+    );
 
     if (!connection) {
       throw new Error(`Connection not found for ${platform} with key ${key}`);
     }
 
     return {
-      contents: [{
-        uri: request.params.uri,
-        mimeType: "application/json",
-        text: JSON.stringify(connection, null, 2)
-      }]
+      contents: [
+        {
+          uri: request.params.uri,
+          mimeType: "application/json",
+          text: JSON.stringify(connection, null, 2),
+        },
+      ],
     };
   }
 
@@ -99,12 +107,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "list_connections",
-        description: "List all available active connections in the user's Pica account",
+        description:
+          "List all available active connections in the user's Pica account",
         inputSchema: {
           type: "object",
           properties: {},
-          required: []
-        }
+          required: [],
+        },
       },
       {
         name: "get_available_actions",
@@ -114,11 +123,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             platform: {
               type: "string",
-              description: "Platform name"
-            }
+              description: "Platform name",
+            },
           },
-          required: ["platform"]
-        }
+          required: ["platform"],
+        },
       },
       {
         name: "get_action_knowledge",
@@ -128,63 +137,65 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             actionId: {
               type: "string",
-              description: "ID of the action"
-            }
+              description: "ID of the action",
+            },
           },
-          required: ["actionId"]
-        }
+          required: ["actionId"],
+        },
       },
       {
         name: "execute_action",
-        description: "Prepare to execute a specific action (requires confirmation)",
+        description:
+          "Prepare to execute a specific action (requires confirmation)",
         inputSchema: {
           type: "object",
           properties: {
             actionId: {
               type: "string",
-              description: "ID of the action to execute"
+              description: "ID of the action to execute",
             },
             connectionKey: {
               type: "string",
-              description: "Key of the connection to use"
+              description: "Key of the connection to use",
             },
             method: {
               type: "string",
-              description: "HTTP method (GET, POST, PUT, DELETE, etc.)"
+              description: "HTTP method (GET, POST, PUT, DELETE, etc.)",
             },
             path: {
               type: "string",
-              description: "API path"
+              description: "API path",
             },
             data: {
               type: "object",
-              description: "Request data (for POST, PUT, etc.)"
+              description: "Request data (for POST, PUT, etc.)",
             },
             pathVariables: {
               type: "object",
-              description: "Variables to replace in the path"
+              description: "Variables to replace in the path",
             },
             queryParams: {
               type: "object",
-              description: "Query parameters"
+              description: "Query parameters",
             },
             headers: {
               type: "object",
-              description: "Additional headers"
+              description: "Additional headers",
             },
             isFormData: {
               type: "boolean",
-              description: "Whether to send data as multipart/form-data"
+              description: "Whether to send data as multipart/form-data",
             },
             isFormUrlEncoded: {
               type: "boolean",
-              description: "Whether to send data as application/x-www-form-urlencoded"
-            }
+              description:
+                "Whether to send data as application/x-www-form-urlencoded",
+            },
           },
-          required: ["actionId", "connectionKey", "method", "path"]
-        }
-      }
-    ]
+          required: ["actionId", "connectionKey", "method", "path"],
+        },
+      },
+    ],
   };
 });
 
@@ -195,21 +206,27 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     case "list_connections": {
       await picaClient.refreshConnections();
       const connections = picaClient.getConnections();
-      const activeConnections = connections.filter(conn => conn.active);
+      const activeConnections = connections.filter((conn) => conn.active);
 
       return {
-        content: [{
-          type: "text",
-          text: JSON.stringify({
-            success: true,
-            connections: activeConnections.map(conn => ({
-              key: conn.key,
-              platform: conn.platform,
-              active: conn.active
-            })),
-            message: `Found ${activeConnections.length} active connections in your Pica account.`
-          }, null, 2)
-        }]
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                success: true,
+                connections: activeConnections.map((conn) => ({
+                  key: conn.key,
+                  platform: conn.platform,
+                  active: conn.active,
+                })),
+                message: `Found ${activeConnections.length} active connections in your Pica account.`,
+              },
+              null,
+              2,
+            ),
+          },
+        ],
       };
     }
 
@@ -220,28 +237,40 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const actions = await picaClient.getAvailableActions(platform);
 
         return {
-          content: [{
-            type: "text",
-            text: JSON.stringify({
-              success: true,
-              platform,
-              actions: actions.map((action: AvailableAction) => ({
-                id: action._id,
-                title: action.title,
-                tags: action.tags || []
-              }))
-            }, null, 2)
-          }]
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  platform,
+                  actions: actions.map((action: AvailableAction) => ({
+                    id: action._id,
+                    title: action.title,
+                    tags: action.tags || [],
+                  })),
+                },
+                null,
+                2,
+              ),
+            },
+          ],
         };
       } catch (error: any) {
         return {
-          content: [{
-            type: "text",
-            text: JSON.stringify({
-              success: false,
-              error: error.message
-            }, null, 2)
-          }]
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: false,
+                  error: error.message,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
         };
       }
     }
@@ -253,28 +282,40 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const action = await picaClient.getActionKnowledge(actionId);
 
         return {
-          content: [{
-            type: "text",
-            text: JSON.stringify({
-              success: true,
-              action: {
-                id: action._id,
-                title: action.title,
-                knowledge: action.knowledge,
-                path: action.path
-              }
-            }, null, 2)
-          }]
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  action: {
+                    id: action._id,
+                    title: action.title,
+                    knowledge: action.knowledge,
+                    path: action.path,
+                  },
+                },
+                null,
+                2,
+              ),
+            },
+          ],
         };
       } catch (error: any) {
         return {
-          content: [{
-            type: "text",
-            text: JSON.stringify({
-              success: false,
-              error: error.message
-            }, null, 2)
-          }]
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: false,
+                  error: error.message,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
         };
       }
     }
@@ -290,7 +331,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         queryParams,
         headers,
         isFormData,
-        isFormUrlEncoded
+        isFormUrlEncoded,
       } = request.params.arguments as any;
 
       try {
@@ -304,22 +345,28 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           queryParams,
           headers,
           isFormData,
-          isFormUrlEncoded
+          isFormUrlEncoded,
         );
 
         return {
-          content: [{
-            type: "text",
-            text: JSON.stringify({
-              success: true,
-              result: result.responseData,
-              requestConfig: {
-                method,
-                path,
-                headers: Object.keys(result.requestConfig.headers || {})
-              }
-            }, null, 2)
-          }]
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  result: result.responseData,
+                  requestConfig: {
+                    method,
+                    path,
+                    headers: Object.keys(result.requestConfig.headers || {}),
+                  },
+                },
+                null,
+                2,
+              ),
+            },
+          ],
         };
       } catch (error: any) {
         let errorMessage = error.message;
@@ -329,13 +376,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
 
         return {
-          content: [{
-            type: "text",
-            text: JSON.stringify({
-              success: false,
-              error: errorMessage
-            }, null, 2)
-          }]
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: false,
+                  error: errorMessage,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
         };
       }
     }

@@ -1,6 +1,6 @@
-import {Connection, ConnectionDefinition,} from "./models/interfaces.ts";
+import { Connection, ConnectionDefinition } from "./models/interfaces.ts";
 import axios from "axios";
-import FormData from 'form-data';
+import FormData from "form-data";
 
 export default class PicaClient {
   private secret: string;
@@ -97,7 +97,10 @@ export default class PicaClient {
     }
   }
 
-  public replacePathVariables(path: string, variables: Record<string, string | number | boolean>): string {
+  public replacePathVariables(
+    path: string,
+    variables: Record<string, string | number | boolean>,
+  ): string {
     return path.replace(/\{\{([^}]+)\}\}/g, (match, variable) => {
       const value = variables[variable];
       if (!value) {
@@ -117,16 +120,18 @@ export default class PicaClient {
     queryParams?: Record<string, any>,
     headers?: Record<string, any>,
     isFormData?: boolean,
-    isFormUrlEncoded?: boolean
+    isFormUrlEncoded?: boolean,
   ) {
     try {
       const newHeaders = {
         ...this.generateHeaders(),
-        'x-pica-connection-key': connectionKey,
-        'x-pica-action-id': actionId,
-        ...(isFormData ? { 'Content-Type': 'multipart/form-data' } : {}),
-        ...(isFormUrlEncoded ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {}),
-        ...headers
+        "x-pica-connection-key": connectionKey,
+        "x-pica-action-id": actionId,
+        ...(isFormData ? { "Content-Type": "multipart/form-data" } : {}),
+        ...(isFormUrlEncoded
+          ? { "Content-Type": "application/x-www-form-urlencoded" }
+          : {}),
+        ...headers,
       };
 
       // Handle path variables
@@ -135,22 +140,22 @@ export default class PicaClient {
         resolvedPath = this.replacePathVariables(path, pathVariables);
       }
 
-      const url = `${this.baseUrl}/v1/passthrough${resolvedPath.startsWith('/') ? resolvedPath : '/' + resolvedPath}`;
+      const url = `${this.baseUrl}/v1/passthrough${resolvedPath.startsWith("/") ? resolvedPath : "/" + resolvedPath}`;
 
       const requestConfig: any = {
         url,
         method,
         headers: newHeaders,
-        params: queryParams
+        params: queryParams,
       };
 
-      if (method?.toLowerCase() !== 'get') {
+      if (method?.toLowerCase() !== "get") {
         if (isFormData) {
           const formData = new FormData();
 
-          if (data && typeof data === 'object' && !Array.isArray(data)) {
+          if (data && typeof data === "object" && !Array.isArray(data)) {
             Object.entries(data).forEach(([key, value]) => {
-              if (typeof value === 'object') {
+              if (typeof value === "object") {
                 formData.append(key, JSON.stringify(value));
               } else {
                 formData.append(key, value);
@@ -163,9 +168,9 @@ export default class PicaClient {
         } else if (isFormUrlEncoded) {
           const params = new URLSearchParams();
 
-          if (data && typeof data === 'object' && !Array.isArray(data)) {
+          if (data && typeof data === "object" && !Array.isArray(data)) {
             Object.entries(data).forEach(([key, value]) => {
-              if (typeof value === 'object') {
+              if (typeof value === "object") {
                 params.append(key, JSON.stringify(value));
               } else {
                 params.append(key, String(value));
@@ -182,7 +187,7 @@ export default class PicaClient {
       const response = await axios(requestConfig);
       return {
         responseData: response.data,
-        requestConfig
+        requestConfig,
       };
     } catch (error) {
       console.error("Error executing action:", error);

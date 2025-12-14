@@ -17,6 +17,6 @@ export interface ConnectionDefinition {
   frontend: {
     spec: {
       title: string;
-    }
-  }
+    };
+  };
 }
